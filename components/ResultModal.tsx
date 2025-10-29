@@ -65,15 +65,6 @@ const ResultModal: React.FC<ResultModalProps> = ({ data, onClose }) => {
                     >
                         ¡Quiero mi cambio AHORA!
                     </button>
-                    <a
-                        href={`/perfil-bienestar/${data.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full bg-white border border-green-600 text-green-700 font-semibold py-3 px-6 rounded-lg hover:bg-green-50 transition-all duration-300 text-center text-md flex items-center justify-center"
-                    >
-                        <ClipboardPlusIcon />
-                        <span className="ml-2">Adelanta tu Proceso: Llena tu Perfil</span>
-                    </a>
                 </div>
             </div>
              <style>{`

@@ -5,7 +5,7 @@ import { WhatsappIcon } from './icons/WhatsappIcon';
 import WellnessProfileForm from './WellnessProfileForm';
 import { WellnessProfileData, WellnessQuestionnaireData } from '../types';
 import supabase from '../supabaseClient';
-import { FileTextIcon, ClipboardListIcon, DownloadIcon, ShareLinkIcon } from './icons/DocumentIcon';
+import { FileTextIcon, ClipboardListIcon, DownloadIcon } from './icons/DocumentIcon';
 import WellnessQuestionnaireForm from './WellnessQuestionnaireForm';
 import WellnessProfilePDF from './pdf/WellnessProfilePDF';
 import WellnessQuestionnairePDF from './pdf/WellnessQuestionnairePDF';
@@ -125,24 +125,6 @@ const UserCard: React.FC<UserCardProps> = ({ data, onDelete, onUpdateStatus, onU
         const message = `¡Hola ${data.nombre}! Soy Cindy, tu coach de bienestar. Recibí tu evaluación y estoy emocionada de que comencemos juntos tu transformación. ¿Te parece si coordinamos una llamada para conversar sobre tus metas? 😊`;
         const encodedMessage = encodeURIComponent(message);
         const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-    };
-
-    const handleSendProfileLink = () => {
-        if (!data.id || !data.telefono) {
-            addToast('No se puede enviar el enlace: falta el ID o el teléfono del usuario.', 'error');
-            return;
-        }
-
-        const baseUrl = window.location.origin;
-        const profileUrl = `${baseUrl}/perfil-bienestar/${data.id}`;
-        
-        const message = `¡Hola ${data.nombre}! Para adelantar nuestro proceso, por favor tómate unos minutos para completar tu Perfil de Bienestar en el siguiente enlace. ¡Nos ayudará mucho para nuestra próxima llamada! 😊\n\n${profileUrl}`;
-        
-        const whatsappNumber = data.telefono.replace(/\D/g, '');
-        const encodedMessage = encodeURIComponent(message);
-        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-        
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     };
 
@@ -304,13 +286,6 @@ const UserCard: React.FC<UserCardProps> = ({ data, onDelete, onUpdateStatus, onU
                             <button onClick={() => setQuestionnaireModalOpen(true)} className="flex items-center text-sm bg-sky-100 hover:bg-sky-200 text-sky-800 font-medium py-2 px-3 rounded-lg transition-colors">
                                 <ClipboardListIcon />
                                 {questionnaireData ? 'Ver Cuestionario' : 'Realizar Cuestionario'}
-                            </button>
-                             <button 
-                                onClick={handleSendProfileLink} 
-                                className="flex items-center text-sm bg-orange-100 hover:bg-orange-200 text-orange-800 font-medium py-2 px-3 rounded-lg transition-colors"
-                            >
-                                <ShareLinkIcon />
-                                Enviar Enlace de Perfil
                             </button>
                              {profileData && (
                                 <button onClick={() => exportToPDF('profile')} disabled={isExporting === 'profile'} className="flex items-center text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-2 px-3 rounded-lg transition-colors disabled:bg-gray-200 disabled:cursor-wait">
