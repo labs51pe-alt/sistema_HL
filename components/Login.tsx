@@ -1,39 +1,36 @@
 import React, { useState } from 'react';
 import HeaderIcon from './icons/HeaderIcon';
-import supabase from '../supabaseClient';
-import { useToast } from '../App';
 import LoadingSpinner from './LoadingSpinner';
 
-const Login: React.FC = () => {
-    // IMPORTANTE: Reemplaza esta dirección de correo con la del administrador
-    // que has creado en tu panel de Supabase.
-    const ADMIN_EMAIL = 'admin@example.com'; 
+// Define las props que el componente recibirá.
+interface LoginProps {
+    onLoginSuccess: () => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+    // La contraseña está almacenada directamente en el código.
+    const ADMIN_PASSWORD = 'Exito2025';
 
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { addToast } = useToast();
+    const [error, setError] = useState('');
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        
-        const { error } = await supabase.auth.signInWithPassword({
-            email: ADMIN_EMAIL,
-            password,
-        });
+        setError('');
 
-        if (error) {
-            // Mensaje de error más amigable
-            if (error.message.includes('Invalid login credentials')) {
-                 addToast('La contraseña es incorrecta. Inténtalo de nuevo.', 'error');
+        // Simula una pequeña demora para la UX
+        setTimeout(() => {
+            if (password === ADMIN_PASSWORD) {
+                // Si la contraseña es correcta, llama a la función del padre.
+                onLoginSuccess();
             } else {
-                 addToast(error.message, 'error');
+                // Si es incorrecta, muestra un error.
+                setError('La contraseña es incorrecta. Inténtalo de nuevo.');
             }
-        } 
-        // Si el login es exitoso, el onAuthStateChange en App.tsx se encargará
-        // de actualizar el estado y mostrar el Dashboard.
-        
-        setIsLoading(false);
+            setIsLoading(false);
+        }, 500);
     };
 
     return (
@@ -59,9 +56,10 @@ const Login: React.FC = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            placeholder="Introduce la contraseña de admin"
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                            placeholder="Introduce la contraseña"
+                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${error ? 'border-red-500 focus:ring-red-500' : 'focus:ring-green-500'}`}
                         />
+                         {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
                     </div>
                     <button
                         type="submit"

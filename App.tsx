@@ -5,8 +5,7 @@ import ResultModal from './components/ResultModal';
 import HeaderIcon from './components/icons/HeaderIcon';
 import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
-import supabase, { isSupabaseConfigured } from './supabaseClient';
-import { Session } from '@supabase/supabase-js';
+import { isSupabaseConfigured } from './supabaseClient';
 import QuickAccessFab from './components/QuickAccessFab';
 import QuickAccessModal from './components/QuickAccessModal';
 import PublicWellnessProfilePage from './components/PublicWellnessProfilePage';
@@ -106,7 +105,7 @@ const SupabaseSetupInstructions: React.FC = () => {
 
 const App: React.FC = () => {
   const [result, setResult] = useState<BmiData | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isQuickAccessOpen, setQuickAccessOpen] = useState(false);
@@ -126,21 +125,21 @@ const App: React.FC = () => {
   // --- End of New Check ---
 
   useEffect(() => {
-    const getSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setLoading(false);
-    };
-
-    getSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    // Revisa sessionStorage para ver si el admin ya había iniciado sesión
+    const loggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+    setIsAdminLoggedIn(loggedIn);
+    setLoading(false);
   }, []);
 
+  const handleAdminLogin = () => {
+    sessionStorage.setItem('isAdminLoggedIn', 'true');
+    setIsAdminLoggedIn(true);
+  };
+
+  const handleAdminLogout = () => {
+    sessionStorage.removeItem('isAdminLoggedIn');
+    setIsAdminLoggedIn(false);
+  };
 
   const handleSuccess = (data: BmiData) => {
     setResult(data);
@@ -164,10 +163,10 @@ const App: React.FC = () => {
     }
     
     if (path === '/admin') {
-      if (session) {
-        return <AdminDashboard />;
+      if (isAdminLoggedIn) {
+        return <AdminDashboard onLogout={handleAdminLogout} />;
       } else {
-        return <Login />;
+        return <Login onLoginSuccess={handleAdminLogin} />;
       }
     }
 

@@ -8,7 +8,12 @@ import { PlusIcon } from './icons/FabIcon';
 import HerbalifeLogo from './icons/HerbalifeLogo';
 import { useToast } from '../App';
 
-const AdminDashboard: React.FC = () => {
+// Se añaden las props para manejar el logout
+interface AdminDashboardProps {
+    onLogout: () => void;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     const [registrations, setRegistrations] = useState<BmiData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAddUserFormOpen, setIsAddUserFormOpen] = useState(false);
@@ -20,13 +25,9 @@ const AdminDashboard: React.FC = () => {
     
     const { addToast } = useToast();
 
-    const handleLogout = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            addToast('Error al cerrar sesión.', 'error');
-        } else {
-             // El onAuthStateChange en App.tsx se encargará de redirigir.
-        }
+    const handleLogout = () => {
+        onLogout();
+        addToast('Sesión cerrada correctamente.', 'success');
     };
 
     const priorityMap: { [key: string]: number } = {
