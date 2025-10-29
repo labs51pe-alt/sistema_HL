@@ -35,6 +35,13 @@ const ResultModal: React.FC<ResultModalProps> = ({ data, onClose }) => {
         onClose();
     };
 
+    const handleProfileLinkClick = () => {
+        if (!data.id) return;
+        const profileUrl = `${window.location.origin}/perfil-bienestar/${data.id}`;
+        window.open(profileUrl, '_blank', 'noopener,noreferrer');
+        onClose();
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 transition-opacity duration-300">
             <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-300 scale-100 animate-fade-in-up relative max-h-[90vh] overflow-y-auto">
@@ -64,6 +71,13 @@ const ResultModal: React.FC<ResultModalProps> = ({ data, onClose }) => {
                         className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-4 px-8 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 text-lg"
                     >
                         ¡Quiero mi cambio AHORA!
+                    </button>
+                    <button
+                        onClick={handleProfileLinkClick}
+                        className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300 text-base"
+                    >
+                        <ClipboardPlusIcon />
+                        Adelanta tu Proceso: Llena tu Perfil
                     </button>
                 </div>
             </div>

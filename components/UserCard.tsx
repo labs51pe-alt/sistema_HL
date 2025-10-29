@@ -5,7 +5,7 @@ import { WhatsappIcon } from './icons/WhatsappIcon';
 import WellnessProfileForm from './WellnessProfileForm';
 import { WellnessProfileData, WellnessQuestionnaireData } from '../types';
 import supabase from '../supabaseClient';
-import { FileTextIcon, ClipboardListIcon, DownloadIcon } from './icons/DocumentIcon';
+import { FileTextIcon, ClipboardListIcon, DownloadIcon, ShareLinkIcon } from './icons/DocumentIcon';
 import WellnessQuestionnaireForm from './WellnessQuestionnaireForm';
 import WellnessProfilePDF from './pdf/WellnessProfilePDF';
 import WellnessQuestionnairePDF from './pdf/WellnessQuestionnairePDF';
@@ -126,6 +126,19 @@ const UserCard: React.FC<UserCardProps> = ({ data, onDelete, onUpdateStatus, onU
         const encodedMessage = encodeURIComponent(message);
         const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    const handleCopyProfileLink = () => {
+        if (!data.id) return;
+        const profileUrl = `${window.location.origin}/perfil-bienestar/${data.id}`;
+        navigator.clipboard.writeText(profileUrl)
+            .then(() => {
+                addToast('Enlace copiado al portapapeles.', 'success');
+            })
+            .catch(err => {
+                console.error('Failed to copy link: ', err);
+                addToast('Error al copiar el enlace.', 'error');
+            });
     };
 
     const handleSaveProfile = async (formData: WellnessProfileData, isFinal: boolean) => {
@@ -286,6 +299,10 @@ const UserCard: React.FC<UserCardProps> = ({ data, onDelete, onUpdateStatus, onU
                             <button onClick={() => setQuestionnaireModalOpen(true)} className="flex items-center text-sm bg-sky-100 hover:bg-sky-200 text-sky-800 font-medium py-2 px-3 rounded-lg transition-colors">
                                 <ClipboardListIcon />
                                 {questionnaireData ? 'Ver Cuestionario' : 'Realizar Cuestionario'}
+                            </button>
+                            <button onClick={handleCopyProfileLink} className="flex items-center text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-3 rounded-lg transition-colors">
+                                <ShareLinkIcon />
+                                Enviar Enlace de Perfil
                             </button>
                              {profileData && (
                                 <button onClick={() => exportToPDF('profile')} disabled={isExporting === 'profile'} className="flex items-center text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-2 px-3 rounded-lg transition-colors disabled:bg-gray-200 disabled:cursor-wait">

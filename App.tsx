@@ -9,6 +9,7 @@ import supabase, { isSupabaseConfigured } from './supabaseClient';
 import { Session } from '@supabase/supabase-js';
 import QuickAccessFab from './components/QuickAccessFab';
 import QuickAccessModal from './components/QuickAccessModal';
+import PublicWellnessProfilePage from './components/PublicWellnessProfilePage';
 
 // --- Toast Notification System ---
 interface ToastMessage {
@@ -155,7 +156,13 @@ const App: React.FC = () => {
     }
 
     const path = window.location.pathname;
+    const profileMatch = path.match(/^\/perfil-bienestar\/(\d+)$/);
 
+    if (profileMatch) {
+        const userId = parseInt(profileMatch[1], 10);
+        return <PublicWellnessProfilePage userId={userId} />;
+    }
+    
     if (path === '/admin') {
       if (session) {
         return <AdminDashboard />;
