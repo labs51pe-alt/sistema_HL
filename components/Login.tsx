@@ -5,7 +5,10 @@ import { useToast } from '../App';
 import LoadingSpinner from './LoadingSpinner';
 
 const Login: React.FC = () => {
-    const [email, setEmail] = useState('');
+    // IMPORTANTE: Reemplaza esta dirección de correo con la del administrador
+    // que has creado en tu panel de Supabase.
+    const ADMIN_EMAIL = 'admin@example.com'; 
+
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { addToast } = useToast();
@@ -15,12 +18,17 @@ const Login: React.FC = () => {
         setIsLoading(true);
         
         const { error } = await supabase.auth.signInWithPassword({
-            email,
+            email: ADMIN_EMAIL,
             password,
         });
 
         if (error) {
-            addToast(error.message, 'error');
+            // Mensaje de error más amigable
+            if (error.message.includes('Invalid login credentials')) {
+                 addToast('La contraseña es incorrecta. Inténtalo de nuevo.', 'error');
+            } else {
+                 addToast(error.message, 'error');
+            }
         } 
         // Si el login es exitoso, el onAuthStateChange en App.tsx se encargará
         // de actualizar el estado y mostrar el Dashboard.
@@ -40,20 +48,6 @@ const Login: React.FC = () => {
             </header>
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-xs">
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        />
-                    </div>
                      <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                             Contraseña
@@ -65,6 +59,7 @@ const Login: React.FC = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            placeholder="Introduce la contraseña de admin"
                             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                     </div>
