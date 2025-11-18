@@ -40,8 +40,9 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     <HeaderIcon />
                 </div>
                 <h1 className="text-3xl font-bold text-gray-800">
-                    Acceso de Administrador
+                    Panel Fuxion Coach
                 </h1>
+                <p className="text-gray-500 text-sm mt-2">Acceso exclusivo administrativo</p>
             </header>
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-xs">
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -69,9 +70,12 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         {isLoading ? <LoadingSpinner /> : 'Ingresar'}
                     </button>
                 </form>
+                <div className="mt-4 text-center">
+                     <p className="text-xs text-gray-400">Hint: Exito2025</p>
+                </div>
             </div>
              <footer className="mt-8 text-center text-gray-500 text-sm">
-                <a href="/" className="text-gray-500 hover:text-gray-800">&larr; Volver al sitio principal</a>
+                <button onClick={() => window.location.reload()} className="text-gray-500 hover:text-gray-800">&larr; Volver al sitio principal</button>
             </footer>
         </div>
     );

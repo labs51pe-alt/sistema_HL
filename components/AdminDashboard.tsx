@@ -25,6 +25,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     
     const { addToast } = useToast();
 
+    // Debug info
+    const PROJECT_ID = 'qfbkkyn...';
+    const TABLE_NAME = 'fuxion_registros';
+
     const handleLogout = () => {
         onLogout();
         addToast('Sesión cerrada correctamente.', 'success');
@@ -60,7 +64,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
         if (error) {
             console.error('Error fetching registrations:', error);
-            addToast('Error al cargar los registros. Verifica que la tabla "fuxion_registros" exista.', 'error');
+            addToast(`Error conectando a ${TABLE_NAME}: ${error.message}`, 'error');
         } else if (data) {
             const sortedData = data.sort((a, b) => getPriority(b.categoria) - getPriority(a.categoria));
             setRegistrations(sortedData as BmiData[]);
@@ -169,20 +173,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         <div className="min-h-screen bg-gray-100 font-sans p-4 md:p-8">
             <header className="mb-8 max-w-4xl mx-auto">
                 <div className="flex justify-between items-center">
-                    <a href="/" className="text-gray-500 hover:text-gray-800">&larr; Volver</a>
+                    <button onClick={onLogout} className="text-gray-500 hover:text-gray-800">&larr; Volver</button>
                     <div className="flex gap-3">
                         <button 
-                            onClick={() => { window.location.reload(); }}
+                            onClick={fetchRegistrations}
                             className="bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-600 transition-colors duration-300 text-sm flex items-center"
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                            Recargar Datos
+                            Recargar BD
                         </button>
                         <button 
                             onClick={handleLogout}
                             className="bg-red-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-600 transition-colors duration-300 text-sm"
                         >
-                            Cerrar Sesión
+                            Salir
                         </button>
                     </div>
                 </div>
@@ -191,12 +195,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                          <HerbalifeLogo className="w-full h-auto" />
                     </div>
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Panel Fuxion (Nueva BD)</h1>
-                        <p className="text-gray-600 mt-2">Gestiona evaluaciones y participantes en el nuevo sistema.</p>
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Panel Fuxion <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full align-middle">NUEVO</span></h1>
+                        <p className="text-gray-600 mt-2">Administración de base de datos nueva ({PROJECT_ID})</p>
                     </div>
                 </div>
             </header>
-            <main className="max-w-4xl mx-auto">
+            <main className="max-w-4xl mx-auto pb-12">
                 <DashboardMetrics 
                     registrations={registrations} 
                     onFilterChange={setActiveFilter}
@@ -249,16 +253,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-gray-500 text-center mt-12">
-                            {registrations.length > 0 ? 'No hay registros que coincidan con los filtros aplicados.' : 'No hay registros en la nueva base de datos.'}
-                        </p>
+                        <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                            <div className="text-6xl mb-4">📂</div>
+                            <h3 className="text-xl font-bold text-gray-800">Base de datos nueva</h3>
+                            <p className="text-gray-500 mt-2">
+                                No hay registros en la tabla <code>{TABLE_NAME}</code>.
+                            </p>
+                            <p className="text-sm text-gray-400 mt-1">Los datos antiguos no se muestran aquí.</p>
+                            <button 
+                                onClick={() => setIsAddUserFormOpen(true)}
+                                className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                            >
+                                Crear primer registro
+                            </button>
+                        </div>
                     )
                 )}
             </main>
+
+            {/* Debug Footer to Confirm Connection */}
+            <footer className="fixed bottom-0 left-0 w-full bg-gray-800 text-gray-400 text-xs py-1 px-4 flex justify-between z-20 opacity-90">
+                <span>Fuxion Coach System v2.1</span>
+                <span>Conectado a: {PROJECT_ID} | Tabla: {TABLE_NAME}</span>
+            </footer>
             
             <button
                 onClick={() => setIsAddUserFormOpen(true)}
-                className="fixed bottom-6 right-6 bg-green-600 text-white rounded-full p-4 shadow-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-green-300"
+                className="fixed bottom-8 right-6 bg-green-600 text-white rounded-full p-4 shadow-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-green-300 z-30"
                 aria-label="Abrir Calculadora y Registro"
             >
                 <PlusIcon />

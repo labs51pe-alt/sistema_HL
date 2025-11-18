@@ -71,37 +71,13 @@ const SupabaseSetupInstructions: React.FC = () => {
                         <p className="text-gray-600">La aplicación necesita conectarse a tu base de datos Supabase.</p>
                     </div>
                 </div>
-
-                <div className="space-y-4 text-gray-700">
-                    <p>Para continuar, debes configurar tus credenciales de Supabase. Es un paso sencillo y rápido.</p>
-                    <p>Abre el siguiente archivo en tu editor de código:</p>
-                    <div className="bg-gray-800 text-white font-mono text-sm rounded-lg p-4">
-                        <code>supabaseClient.ts</code>
-                    </div>
-                    <p>
-                        Dentro de ese archivo, verás dos constantes que debes reemplazar con tus propias claves. Puedes encontrarlas en tu panel de{' '}
-                        <a href="https://app.supabase.com" target="_blank" rel="noopener noreferrer" className="text-green-600 font-semibold hover:underline">
-                            Supabase
-                        </a> (en la sección <span className="font-semibold">Project Settings &gt; API</span>).
-                    </p>
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <pre className="text-sm whitespace-pre-wrap">
-                            <code className="language-typescript">
-                                <span className="text-gray-500">// Reemplaza estas líneas con tus claves reales</span><br />
-                                const supabaseUrl = '<span className="text-red-500 font-bold">https://URL_DE_TU_PROYECTO...</span>';<br />
-                                const supabaseAnonKey = '<span className="text-red-500 font-bold">TU_CLAVE_PUBLICA_ANONIMA...</span>';
-                            </code>
-                        </pre>
-                    </div>
-                    <p className="mt-4">
-                        Una vez que guardes los cambios en el archivo, <strong>esta página se recargará automáticamente</strong> y podrás comenzar a usar la aplicación.
-                    </p>
-                </div>
             </div>
         </div>
     );
 };
 // --- End of Onboarding Component ---
+
+type ViewState = 'home' | 'admin' | 'profile';
 
 const App: React.FC = () => {
   const [result, setResult] = useState<BmiData | null>(null);
@@ -109,6 +85,10 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isQuickAccessOpen, setQuickAccessOpen] = useState(false);
+  
+  // Navigation State
+  const [currentView, setCurrentView] = useState<ViewState>('home');
+  const [profileId, setProfileId] = useState<number | null>(null);
   
   const addToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToasts(prev => [...prev, { id: Date.now(), message, type }]);
@@ -125,9 +105,20 @@ const App: React.FC = () => {
   // --- End of New Check ---
 
   useEffect(() => {
-    // Revisa sessionStorage para ver si el admin ya había iniciado sesión
+    // Check existing session
     const loggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
     setIsAdminLoggedIn(loggedIn);
+    
+    // Check URL for direct profile access (legacy support)
+    const path = window.location.pathname;
+    const profileMatch = path.match(/^\/perfil-bienestar\/(\d+)$/);
+    if (profileMatch) {
+        setProfileId(parseInt(profileMatch[1], 10));
+        setCurrentView('profile');
+    } else if (path === '/admin') {
+        setCurrentView('admin');
+    }
+
     setLoading(false);
   }, []);
 
@@ -139,6 +130,7 @@ const App: React.FC = () => {
   const handleAdminLogout = () => {
     sessionStorage.removeItem('isAdminLoggedIn');
     setIsAdminLoggedIn(false);
+    setCurrentView('home');
   };
 
   const handleSuccess = (data: BmiData) => {
@@ -151,18 +143,15 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     if (loading) {
-      return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
+      return <div className="min-h-screen flex items-center justify-center">Cargando sistema Fuxion...</div>;
     }
 
-    const path = window.location.pathname;
-    const profileMatch = path.match(/^\/perfil-bienestar\/(\d+)$/);
-
-    if (profileMatch) {
-        const userId = parseInt(profileMatch[1], 10);
-        return <PublicWellnessProfilePage userId={userId} />;
+    // Routing Logic based on State
+    if (currentView === 'profile' && profileId) {
+        return <PublicWellnessProfilePage userId={profileId} />;
     }
     
-    if (path === '/admin') {
+    if (currentView === 'admin') {
       if (isAdminLoggedIn) {
         return <AdminDashboard onLogout={handleAdminLogout} />;
       } else {
@@ -170,6 +159,7 @@ const App: React.FC = () => {
       }
     }
 
+    // Home View
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center font-sans p-4">
         <header className="mb-8 text-center w-full max-w-md">
@@ -185,8 +175,14 @@ const App: React.FC = () => {
            {result && <ResultModal data={result} onClose={handleCloseModal} />}
         </main>
         <footer className="mt-8 text-center text-gray-500 text-sm">
-          <p>"Hoy es tu oportunidad de construir el mañana que quieres."</p>
-          <a href="/admin" className="text-gray-400 hover:text-gray-600 text-xs mt-2 block">Admin Panel</a>
+          <p>"Salud Verdadera"</p>
+          <p className="text-xs text-gray-400 mt-1">Fuxion System v2.1 (Nueva BD)</p>
+          <button 
+            onClick={() => setCurrentView('admin')}
+            className="text-gray-400 hover:text-green-600 text-xs mt-2 font-medium underline"
+          >
+            Acceso Admin / Coach
+          </button>
         </footer>
         <QuickAccessFab onClick={() => setQuickAccessOpen(true)} />
         {isQuickAccessOpen && <QuickAccessModal onClose={() => setQuickAccessOpen(false)} />}
