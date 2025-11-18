@@ -143,7 +143,7 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     if (loading) {
-      return <div className="min-h-screen flex items-center justify-center">Cargando sistema Fuxion...</div>;
+      return <div className="min-h-screen flex items-center justify-center">Cargando sistema...</div>;
     }
 
     // Routing Logic based on State
@@ -176,12 +176,11 @@ const App: React.FC = () => {
         </main>
         <footer className="mt-8 text-center text-gray-500 text-sm">
           <p>"Salud Verdadera"</p>
-          <p className="text-xs text-gray-400 mt-1">Fuxion System v2.1 (Nueva BD)</p>
           <button 
             onClick={() => setCurrentView('admin')}
             className="text-gray-400 hover:text-green-600 text-xs mt-2 font-medium underline"
           >
-            Acceso Admin / Coach
+            Acceso Admin
           </button>
         </footer>
         <QuickAccessFab onClick={() => setQuickAccessOpen(true)} />

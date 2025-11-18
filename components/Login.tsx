@@ -70,9 +70,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                         {isLoading ? <LoadingSpinner /> : 'Ingresar'}
                     </button>
                 </form>
-                <div className="mt-4 text-center">
-                     <p className="text-xs text-gray-400">Hint: Exito2025</p>
-                </div>
             </div>
              <footer className="mt-8 text-center text-gray-500 text-sm">
                 <button onClick={() => window.location.reload()} className="text-gray-500 hover:text-gray-800">&larr; Volver al sitio principal</button>

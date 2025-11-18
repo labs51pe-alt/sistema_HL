@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { BmiData } from '../types';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -136,7 +137,7 @@ const ResultModal: React.FC<ResultModalProps> = ({ data, onClose }) => {
         const coachNumber = '51900000000'; // Configurar número real
         
         let message = `Hola Coach, soy ${data.nombre} (IMC: ${data.imc}). El sistema me recomendó el Plan Fuxion: `;
-        if (recommendation) {
+        if (recommendation?.phases) {
             const products = recommendation.phases.map(p => p.productName).join(' + ');
             message += `${products}. ¡Quiero activar mi Fase 1!`;
         }
@@ -207,60 +208,64 @@ const ResultModal: React.FC<ResultModalProps> = ({ data, onClose }) => {
                             </div>
 
                             {/* 2. El Camino Fuxion (Timeline) */}
-                            <div>
-                                <h3 className="text-[#006D44] font-bold text-lg mb-4 flex items-center">
-                                    <span className="bg-[#94c120] w-2 h-6 mr-2 rounded-full"></span>
-                                    Tu Plan de Acción
-                                </h3>
-                                
-                                <div className="relative border-l-2 border-dashed border-gray-300 ml-4 space-y-8 py-2">
-                                    {recommendation.phases.map((phase, index) => (
-                                        <div key={index} className="relative pl-8">
-                                            {/* Icon Marker */}
-                                            <div className={`absolute -left-[21px] top-0 w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center
-                                                ${phase.iconType === 'detox' ? 'bg-purple-600' : 
-                                                  phase.iconType === 'nutrition' ? 'bg-blue-500' : 'bg-red-500'}`}>
-                                                {phase.iconType === 'detox' && <span className="text-white text-xs">🧹</span>}
-                                                {phase.iconType === 'nutrition' && <span className="text-white text-xs">🛡️</span>}
-                                                {phase.iconType === 'boost' && <span className="text-white text-xs">🔥</span>}
-                                            </div>
-
-                                            {/* Content Card */}
-                                            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded text-white
-                                                        ${phase.iconType === 'detox' ? 'bg-purple-600' : 
-                                                          phase.iconType === 'nutrition' ? 'bg-blue-500' : 'bg-red-500'}`}>
-                                                        {phase.title}
-                                                    </span>
-                                                    <span className="text-xs text-gray-400 font-medium">{phase.duration}</span>
+                            {recommendation.phases && recommendation.phases.length > 0 && (
+                                <div>
+                                    <h3 className="text-[#006D44] font-bold text-lg mb-4 flex items-center">
+                                        <span className="bg-[#94c120] w-2 h-6 mr-2 rounded-full"></span>
+                                        Tu Plan de Acción
+                                    </h3>
+                                    
+                                    <div className="relative border-l-2 border-dashed border-gray-300 ml-4 space-y-8 py-2">
+                                        {recommendation.phases.map((phase, index) => (
+                                            <div key={index} className="relative pl-8">
+                                                {/* Icon Marker */}
+                                                <div className={`absolute -left-[21px] top-0 w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center
+                                                    ${phase.iconType === 'detox' ? 'bg-purple-600' : 
+                                                    phase.iconType === 'nutrition' ? 'bg-blue-500' : 'bg-red-500'}`}>
+                                                    {phase.iconType === 'detox' && <span className="text-white text-xs">🧹</span>}
+                                                    {phase.iconType === 'nutrition' && <span className="text-white text-xs">🛡️</span>}
+                                                    {phase.iconType === 'boost' && <span className="text-white text-xs">🔥</span>}
                                                 </div>
-                                                
-                                                <h4 className="text-lg font-bold text-gray-800 mt-2">{phase.productName}</h4>
-                                                <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                                                    <span className="font-semibold text-gray-800">Por qué: </span> 
-                                                    {phase.reason}
-                                                </p>
+
+                                                {/* Content Card */}
+                                                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded text-white
+                                                            ${phase.iconType === 'detox' ? 'bg-purple-600' : 
+                                                            phase.iconType === 'nutrition' ? 'bg-blue-500' : 'bg-red-500'}`}>
+                                                            {phase.title}
+                                                        </span>
+                                                        <span className="text-xs text-gray-400 font-medium">{phase.duration}</span>
+                                                    </div>
+                                                    
+                                                    <h4 className="text-lg font-bold text-gray-800 mt-2">{phase.productName}</h4>
+                                                    <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                                                        <span className="font-semibold text-gray-800">Por qué: </span> 
+                                                        {phase.reason}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* 3. Nutrition Tips Compact */}
-                            <div className="bg-[#eef6e8] p-4 rounded-xl border border-[#94c120]/20">
-                                <h4 className="text-[#006D44] font-bold text-sm mb-2 flex items-center">
-                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                    Tips Nutricionales
-                                </h4>
-                                <ul className="space-y-1">
-                                    {recommendation.nutritionTips.map((tip, i) => (
-                                        <li key={i} className="text-xs text-gray-700 flex items-start">
-                                            <span className="text-[#94c120] mr-1">•</span> {tip}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                            {recommendation.nutritionTips && recommendation.nutritionTips.length > 0 && (
+                                <div className="bg-[#eef6e8] p-4 rounded-xl border border-[#94c120]/20">
+                                    <h4 className="text-[#006D44] font-bold text-sm mb-2 flex items-center">
+                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                        Tips Nutricionales
+                                    </h4>
+                                    <ul className="space-y-1">
+                                        {recommendation.nutritionTips.map((tip, i) => (
+                                            <li key={i} className="text-xs text-gray-700 flex items-start">
+                                                <span className="text-[#94c120] mr-1">•</span> {tip}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
 
                         </>
                     ) : null}

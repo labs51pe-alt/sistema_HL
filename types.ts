@@ -1,3 +1,4 @@
+
 export interface BmiData {
     id?: number;
     created_at?: string;
@@ -10,6 +11,9 @@ export interface BmiData {
     categoria: string;
     estado?: string;
     notas?: string;
+    // CRM Fields
+    last_interaction?: string; // Fecha del último contacto
+    products?: string[]; // Array de productos que ha comprado/está tomando
 }
 
 export interface WellnessProfileData {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import supabase from '../supabaseClient';
 import { BmiData } from '../types';
@@ -22,11 +23,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
+    const [crmMode, setCrmMode] = useState(false); // Toggle for CRM sorting
     
     const { addToast } = useToast();
 
     // Debug info
-    const PROJECT_ID = 'qfbkkyn...';
     const TABLE_NAME = 'fuxion_registros';
 
     const handleLogout = () => {
@@ -44,7 +45,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         'peso normal': 0,
     };
 
-    const getPriority = (category: string) => {
+    const getPriority = (category: string | undefined | null) => {
+        if (!category) return -1;
         const lowerCaseCategory = category.toLowerCase();
         for (const key in priorityMap) {
             if (lowerCaseCategory.includes(key)) {
@@ -65,7 +67,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         if (error) {
             console.error('Error fetching registrations:', error);
             addToast(`Error conectando a ${TABLE_NAME}: ${error.message}`, 'error');
+            setRegistrations([]);
         } else if (data) {
+            // Default sort by BMI priority initially
             const sortedData = data.sort((a, b) => getPriority(b.categoria) - getPriority(a.categoria));
             setRegistrations(sortedData as BmiData[]);
         } else {
@@ -137,14 +141,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         }
     };
 
-    const uniqueCategories = useMemo(() => 
-        ['all', ...Array.from(new Set(registrations.map(r => r.categoria)))]
-    , [registrations]);
+    const uniqueCategories = useMemo(() => {
+        if (!registrations) return ['all'];
+        return ['all', ...Array.from(new Set(registrations.map(r => r.categoria || 'Sin Categoría')))];
+    }, [registrations]);
 
     const filteredRegistrations = useMemo(() => {
+        if (!registrations) return [];
         const today = new Date().toISOString().slice(0, 10);
 
-        return registrations.filter(reg => {
+        let result = registrations.filter(reg => {
             const statusFilterMatch = (() => {
                 if (activeFilter === 'all') return true;
                 switch (activeFilter) {
@@ -162,11 +168,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 ? reg.nombre.toLowerCase().includes(searchTerm.toLowerCase())
                 : true;
             const categoryFilterMatch = categoryFilter !== 'all'
-                ? reg.categoria === categoryFilter
+                ? (reg.categoria || 'Sin Categoría') === categoryFilter
                 : true;
             return statusFilterMatch && searchFilterMatch && categoryFilterMatch;
         });
-    }, [registrations, activeFilter, searchTerm, categoryFilter]);
+
+        // CRM Sorting Logic: Risk First
+        if (crmMode) {
+            result = result.sort((a, b) => {
+                const getDays = (dateStr?: string) => {
+                    if (!dateStr) return 999;
+                    return Math.abs(new Date().getTime() - new Date(dateStr).getTime());
+                };
+                // Descending order of days since contact (Highest gap = Higher risk = Top)
+                return getDays(b.last_interaction) - getDays(a.last_interaction);
+            });
+        }
+
+        return result;
+
+    }, [registrations, activeFilter, searchTerm, categoryFilter, crmMode]);
 
 
     return (
@@ -191,12 +212,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     </div>
                 </div>
                 <div className="mt-6 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-                    <div className="w-48 md:w-56">
+                    <div className="w-20 md:w-24">
                          <HerbalifeLogo className="w-full h-auto" />
                     </div>
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Panel Fuxion <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full align-middle">NUEVO</span></h1>
-                        <p className="text-gray-600 mt-2">Administración de base de datos nueva ({PROJECT_ID})</p>
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Panel</h1>
                     </div>
                 </div>
             </header>
@@ -208,7 +228,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 />
 
                 <div className="mb-6 bg-white p-4 rounded-lg shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3">Filtros de Búsqueda</h3>
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-lg font-semibold text-gray-700">Filtros & CRM</h3>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                            <span className={`text-xs font-bold uppercase ${crmMode ? 'text-red-500' : 'text-gray-400'}`}>
+                                {crmMode ? 'Orden: Prioridad Seguimiento (CRM)' : 'Orden: Prioridad IMC (Venta)'}
+                            </span>
+                            <div className="relative">
+                                <input type="checkbox" className="sr-only" checked={crmMode} onChange={() => setCrmMode(!crmMode)} />
+                                <div className={`block w-10 h-6 rounded-full transition-colors ${crmMode ? 'bg-red-400' : 'bg-gray-300'}`}></div>
+                                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${crmMode ? 'transform translate-x-4' : ''}`}></div>
+                            </div>
+                        </label>
+                    </div>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input
                             type="text"
@@ -270,12 +303,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     )
                 )}
             </main>
-
-            {/* Debug Footer to Confirm Connection */}
-            <footer className="fixed bottom-0 left-0 w-full bg-gray-800 text-gray-400 text-xs py-1 px-4 flex justify-between z-20 opacity-90">
-                <span>Fuxion Coach System v2.1</span>
-                <span>Conectado a: {PROJECT_ID} | Tabla: {TABLE_NAME}</span>
-            </footer>
             
             <button
                 onClick={() => setIsAddUserFormOpen(true)}
