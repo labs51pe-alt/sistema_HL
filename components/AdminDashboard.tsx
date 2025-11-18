@@ -52,6 +52,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
     const fetchRegistrations = useCallback(async () => {
         setIsLoading(true);
+        // Explicitly fetching from the NEW table: fuxion_registros
         const { data, error } = await supabase
             .from('fuxion_registros')
             .select('*')
@@ -59,10 +60,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
         if (error) {
             console.error('Error fetching registrations:', error);
-            addToast('Error al cargar los registros. Revisa los permisos RLS.', 'error');
+            addToast('Error al cargar los registros. Verifica que la tabla "fuxion_registros" exista.', 'error');
         } else if (data) {
             const sortedData = data.sort((a, b) => getPriority(b.categoria) - getPriority(a.categoria));
             setRegistrations(sortedData as BmiData[]);
+        } else {
+            setRegistrations([]);
         }
         setIsLoading(false);
     }, [addToast]);
@@ -167,20 +170,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             <header className="mb-8 max-w-4xl mx-auto">
                 <div className="flex justify-between items-center">
                     <a href="/" className="text-gray-500 hover:text-gray-800">&larr; Volver</a>
-                    <button 
-                        onClick={handleLogout}
-                        className="bg-red-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-600 transition-colors duration-300 text-sm"
-                    >
-                        Cerrar Sesión
-                    </button>
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={() => { window.location.reload(); }}
+                            className="bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-600 transition-colors duration-300 text-sm flex items-center"
+                        >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Recargar Datos
+                        </button>
+                        <button 
+                            onClick={handleLogout}
+                            className="bg-red-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-600 transition-colors duration-300 text-sm"
+                        >
+                            Cerrar Sesión
+                        </button>
+                    </div>
                 </div>
                 <div className="mt-6 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
                     <div className="w-48 md:w-56">
                          <HerbalifeLogo className="w-full h-auto" />
                     </div>
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Panel de Control Fuxion</h1>
-                        <p className="text-gray-600 mt-2">Gestiona evaluaciones, clientes y planes de bienestar Fuxion.</p>
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Panel Fuxion (Nueva BD)</h1>
+                        <p className="text-gray-600 mt-2">Gestiona evaluaciones y participantes en el nuevo sistema.</p>
                     </div>
                 </div>
             </header>
@@ -238,7 +250,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                         </div>
                     ) : (
                         <p className="text-gray-500 text-center mt-12">
-                            {registrations.length > 0 ? 'No hay registros que coincidan con los filtros aplicados.' : 'No hay registros todavía.'}
+                            {registrations.length > 0 ? 'No hay registros que coincidan con los filtros aplicados.' : 'No hay registros en la nueva base de datos.'}
                         </p>
                     )
                 )}
