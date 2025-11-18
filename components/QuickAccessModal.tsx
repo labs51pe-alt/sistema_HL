@@ -32,7 +32,7 @@ const QuickAccessModal: React.FC<QuickAccessModalProps> = ({ onClose }) => {
 
         try {
             const { data, error } = await supabase
-                .from('registros_imc')
+                .from('fuxion_registros')
                 .select('*')
                 .eq('telefono', phone.trim())
                 .single();
@@ -63,8 +63,8 @@ const QuickAccessModal: React.FC<QuickAccessModalProps> = ({ onClose }) => {
         setIsLoading(true);
         try {
             const [profileRes, questionnaireRes] = await Promise.all([
-                supabase.from('wellness_profiles').select('*').eq('user_id', foundUser.id).single(),
-                supabase.from('wellness_consultations').select('*').eq('user_id', foundUser.id).single()
+                supabase.from('fuxion_profiles').select('*').eq('user_id', foundUser.id).single(),
+                supabase.from('fuxion_consultations').select('*').eq('user_id', foundUser.id).single()
             ]);
 
             if (profileRes.error && profileRes.error.code !== 'PGRST116') throw profileRes.error;
@@ -92,8 +92,8 @@ const QuickAccessModal: React.FC<QuickAccessModalProps> = ({ onClose }) => {
         const dataToSave = { ...formData, user_id: foundUser.id };
 
         const { error } = await (profileData
-            ? supabase.from('wellness_profiles').update(dataToSave).eq('user_id', foundUser.id)
-            : supabase.from('wellness_profiles').insert(dataToSave));
+            ? supabase.from('fuxion_profiles').update(dataToSave).eq('user_id', foundUser.id)
+            : supabase.from('fuxion_profiles').insert(dataToSave));
 
         if (error) {
             addToast(`Error al guardar el perfil: ${error.message}`, 'error');
@@ -108,8 +108,8 @@ const QuickAccessModal: React.FC<QuickAccessModalProps> = ({ onClose }) => {
         const dataToSave = { ...formData, user_id: foundUser.id };
 
         const { error } = await (questionnaireData
-            ? supabase.from('wellness_consultations').update(dataToSave).eq('user_id', foundUser.id)
-            : supabase.from('wellness_consultations').insert(dataToSave));
+            ? supabase.from('fuxion_consultations').update(dataToSave).eq('user_id', foundUser.id)
+            : supabase.from('fuxion_consultations').insert(dataToSave));
 
         if (error) {
             addToast(`Error al guardar el cuestionario: ${error.message}`, 'error');

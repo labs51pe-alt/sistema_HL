@@ -59,7 +59,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
 
         // Fetch the inserted record to get its ID
         const { data: insertedData, error: supabaseError } = await supabase
-            .from('registros_imc')
+            .from('fuxion_registros')
             .insert([{
                 nombre,
                 telefono,

@@ -61,7 +61,7 @@ const PublicWellnessProfilePage: React.FC<PublicWellnessProfilePageProps> = ({ u
 
             // First, check if a profile already exists.
             const { data: profileData, error: profileError } = await supabase
-                .from('wellness_profiles')
+                .from('fuxion_profiles')
                 .select('*')
                 .eq('user_id', userId)
                 .single();
@@ -83,7 +83,7 @@ const PublicWellnessProfilePage: React.FC<PublicWellnessProfilePageProps> = ({ u
 
             // If no profile, fetch user name to display on the form.
             const { data: userData, error: userError } = await supabase
-                .from('registros_imc')
+                .from('fuxion_registros')
                 .select('nombre')
                 .eq('id', userId)
                 .single();
@@ -144,14 +144,14 @@ const PublicWellnessProfilePage: React.FC<PublicWellnessProfilePageProps> = ({ u
         };
         
         const { data: existingProfile } = await supabase
-            .from('wellness_profiles')
+            .from('fuxion_profiles')
             .select('id')
             .eq('user_id', userId)
             .single();
 
         const { error } = await (existingProfile
-            ? supabase.from('wellness_profiles').update(sanitizedData).eq('user_id', userId)
-            : supabase.from('wellness_profiles').insert(sanitizedData));
+            ? supabase.from('fuxion_profiles').update(sanitizedData).eq('user_id', userId)
+            : supabase.from('fuxion_profiles').insert(sanitizedData));
         
         if (error) {
             addToast(`Error al guardar el perfil: ${error.message}`, 'error');
@@ -179,7 +179,7 @@ const PublicWellnessProfilePage: React.FC<PublicWellnessProfilePageProps> = ({ u
         
         if (success) {
             await supabase
-                .from('registros_imc')
+                .from('fuxion_registros')
                 .update({ estado: 'Evaluación Realizada' })
                 .eq('id', userId);
             setIsSuccess(true);

@@ -53,7 +53,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     const fetchRegistrations = useCallback(async () => {
         setIsLoading(true);
         const { data, error } = await supabase
-            .from('registros_imc')
+            .from('fuxion_registros')
             .select('*')
             .order('created_at', { ascending: false });
 
@@ -79,7 +79,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
     const handleDeleteRegistration = async (id: number) => {
         const { error } = await supabase
-            .from('registros_imc')
+            .from('fuxion_registros')
             .delete()
             .eq('id', id);
 
@@ -94,7 +94,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
     const handleUpdateStatus = async (id: number, newStatus: string) => {
         const { data, error } = await supabase
-            .from('registros_imc')
+            .from('fuxion_registros')
             .update({ estado: newStatus })
             .eq('id', id)
             .select()
@@ -113,7 +113,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
     const handleUpdateNotes = async (id: number, newNotes: string) => {
         const { data, error } = await supabase
-            .from('registros_imc')
+            .from('fuxion_registros')
             .update({ notas: newNotes })
             .eq('id', id)
             .select()
@@ -175,10 +175,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     </button>
                 </div>
                 <div className="mt-6 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-                    <HerbalifeLogo className="h-20 w-auto" />
+                    <div className="w-48 md:w-56">
+                         <HerbalifeLogo className="w-full h-auto" />
+                    </div>
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Panel de Control</h1>
-                        <p className="text-gray-600 mt-2">Gestiona tus participantes y visualiza tu progreso.</p>
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Panel de Control Fuxion</h1>
+                        <p className="text-gray-600 mt-2">Gestiona evaluaciones, clientes y planes de bienestar Fuxion.</p>
                     </div>
                 </div>
             </header>

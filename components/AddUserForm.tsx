@@ -96,7 +96,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onClose, onSuccess }) => {
         
         try {
             const { error: supabaseError } = await supabase
-                .from('registros_imc')
+                .from('fuxion_registros')
                 .insert([resultData]);
 
             if (supabaseError) {

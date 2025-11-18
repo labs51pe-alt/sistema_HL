@@ -1,101 +1,261 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BmiData } from '../types';
-import { ClipboardPlusIcon } from './icons/DocumentIcon';
+import { GoogleGenAI, Type } from "@google/genai";
 
 interface ResultModalProps {
     data: BmiData;
     onClose: () => void;
 }
 
+// Estructura de respuesta de la IA Fuxion
+interface AIRecommendation {
+    analysis: string;
+    nutritionTips: string[]; // Consejos de comida sólida
+    habits: string[];
+    fuxionProducts: {
+        name: string;
+        benefit: string;
+        usage: string;
+    }[];
+}
+
 const ResultModal: React.FC<ResultModalProps> = ({ data, onClose }) => {
-    
-    const getMotivationalMessage = (category: string) => {
-        const lowerCaseCategory = category.toLowerCase();
-        if (lowerCaseCategory.includes('bajo peso')) {
-            return "Reconocer dónde estás es el primer paso hacia tu bienestar. Tienes la oportunidad de nutrir tu cuerpo y construir la fuerza que deseas. ¡Vamos a crear juntos un plan para que te sientas increíble!";
-        }
-        if (lowerCaseCategory.includes('peso normal')) {
-            return "¡Felicidades, estás en una posición fantástica! Este es el momento ideal para consolidar hábitos saludables y llevar tu vitalidad a un nuevo nivel. ¡Exploremos cómo puedes sentirte aún más fuerte y con más energía!";
-        }
-        if (lowerCaseCategory.includes('sobrepeso')) {
-            return "¡Excelente decisión la de tomar el control! Este cálculo es el punto de partida de una increíble transformación. Cada pequeño cambio que hagas desde hoy te acerca a tu meta. ¡Estoy aquí para guiarte en el proceso!";
-        }
-        if (lowerCaseCategory.includes('obesidad')) {
-            return "¡El paso más valiente es siempre el primero, y lo acabas de dar! Olvídate de las etiquetas. Hoy empieza tu historia de superación y bienestar. Tienes toda la fuerza que necesitas para lograrlo, y no estarás solo en este camino. ¡Juntos lo haremos posible!";
-        }
-        return "Cada paso cuenta en el camino hacia tu bienestar. ¡Sigue adelante!";
-    };
+    const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null);
+    const [loadingAI, setLoadingAI] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const generatePlan = async () => {
+            try {
+                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+                
+                // Instrucción del Sistema: Coach Fuxion
+                const systemInstruction = `
+                    Eres un Coach de Bienestar Experto de la marca FUXION.
+                    Tu misión es crear un plan personalizado analizando el IMC del usuario bajo estrictos reglamentos de la OMS.
+
+                    **1. Análisis Reglamentario (OMS):**
+                    - Evalúa el IMC (${data.imc}) y explica claramente los riesgos de salud asociados según la Organización Mundial de la Salud (ej. riesgo cardiovascular, diabetes, etc. para sobrepeso; anemia/inmunidad para bajo peso).
+
+                    **2. Nutrición (QUÉ COMER):**
+                    - Recomienda 3 pautas nutricionales sólidas (comida real).
+                    - Enfócate en calidad de alimentos, horarios o tipos de cocción adecuados para su objetivo (Déficit calórico, Superávit o Mantenimiento).
+
+                    **3. Suplementación Fuxion (QUÉ TOMAR):**
+                    Selecciona 3 productos del catálogo Fuxion que mejor se adapten a su perfil:
+                    - **Bajar Peso/Detox:** Prunex 1 (limpieza), Thermo T3 (quemador), Nocarb-T (bloqueador), Pack 5/14.
+                    - **Energía/Deporte:** Vita Xtra T+, Pre Sport, Post Sport, Xpeed.
+                    - **Inmunidad/Salud:** Veramas, Ganomas, Flora Liv (probióticos).
+                    - **Anti-Edad/Huesos:** Beauty In, Youth Elixir.
+                    - **Relajación:** Off.
+                    
+                    El tono debe ser profesional pero motivador.
+                `;
+
+                const prompt = `
+                    Usuario: ${data.nombre}
+                    Edad: ${data.edad}
+                    Peso: ${data.peso} kg
+                    Altura: ${data.altura} cm
+                    IMC: ${data.imc}
+                    Categoría: ${data.categoria}
+                `;
+
+                const response = await ai.models.generateContent({
+                    model: "gemini-2.5-flash",
+                    contents: prompt,
+                    config: {
+                        systemInstruction: systemInstruction,
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: Type.OBJECT,
+                            properties: {
+                                analysis: {
+                                    type: Type.STRING,
+                                    description: "Análisis de salud basado en reglamentos OMS y riesgos asociados.",
+                                },
+                                nutritionTips: {
+                                    type: Type.ARRAY,
+                                    items: { type: Type.STRING },
+                                    description: "3 consejos claros sobre alimentación (comida).",
+                                },
+                                habits: {
+                                    type: Type.ARRAY,
+                                    items: { type: Type.STRING },
+                                    description: "3 hábitos de estilo de vida saludable.",
+                                },
+                                fuxionProducts: {
+                                    type: Type.ARRAY,
+                                    items: {
+                                        type: Type.OBJECT,
+                                        properties: {
+                                            name: { type: Type.STRING, description: "Nombre del producto Fuxion" },
+                                            benefit: { type: Type.STRING, description: "Beneficio específico para este usuario" },
+                                            usage: { type: Type.STRING, description: "Recomendación de consumo" },
+                                        }
+                                    },
+                                    description: "Lista de 3 productos Fuxion recomendados.",
+                                },
+                            },
+                        },
+                    },
+                });
+
+                if (response.text) {
+                    const parsedData = JSON.parse(response.text);
+                    setRecommendation(parsedData);
+                } else {
+                    throw new Error("No response from AI");
+                }
+
+            } catch (err) {
+                console.error("Error generating plan:", err);
+                setError("Estamos diseñando tu plan Fuxion ideal...");
+            } finally {
+                setLoadingAI(false);
+            }
+        };
+
+        generatePlan();
+    }, [data]);
 
     const handleWhatsAppClick = () => {
-        const whatsappNumber = '51900652150'; 
-        const message = `¡Hola Cindy! Soy ${data.nombre} y estoy con toda la motivación para empezar mi transformación. Mi resultado de IMC es ${data.imc} (${data.categoria}). ¿Me podrías contar cuál es el siguiente paso para comenzar? ¡Gracias!`;
+        // Intenta obtener el número del usuario (aunque en este modal data.telefono es del usuario, el número destino es del coach)
+        // Aquí asumimos un número genérico de coach o deberías configurarlo.
+        const coachNumber = '51900000000'; // Reemplazar con el número real del admin/coach
+        
+        let message = `Hola, soy ${data.nombre}. Mi IMC es ${data.imc} (${data.categoria}).`;
+        
+        if (recommendation) {
+            const products = recommendation.fuxionProducts.map(p => p.name).join(', ');
+            message += ` Me interesa el pack Fuxion sugerido: ${products}. ¿Cómo lo consigo?`;
+        }
+
         const encodedMessage = encodeURIComponent(message);
-        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+        // Si data.telefono es del usuario, usamos window.open para ir al WA del coach.
+        // Nota: En un caso real, el "coachNumber" debería venir de una config.
+        const whatsappUrl = `https://wa.me/?text=${encodedMessage}`; 
+        // Abrir WA genérico para que el usuario seleccione contacto o poner numero fijo
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
         onClose();
     };
 
-    const handleProfileLinkClick = () => {
-        if (!data.id) return;
-        const profileUrl = `${window.location.origin}/perfil-bienestar/${data.id}`;
-        window.open(profileUrl, '_blank', 'noopener,noreferrer');
-        onClose();
-    };
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 transition-opacity duration-300">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-300 scale-100 animate-fade-in-up relative max-h-[90vh] overflow-y-auto">
-                <button 
-                    onClick={onClose} 
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-                    aria-label="Cerrar modal"
-                >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-                <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">
-                    ¡Un gran paso, <span className="text-green-600">{data.nombre}</span>!
-                </h2>
-                <p className="text-center text-gray-600 mb-6 px-4">
-                    {getMotivationalMessage(data.categoria)}
-                </p>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all relative max-h-[90vh] overflow-y-auto flex flex-col">
                 
-                <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center mb-6">
-                    <p className="text-sm text-green-800">Tu resultado de IMC es:</p>
-                    <p className="text-5xl font-bold text-green-600 my-2">{data.imc}</p>
-                    <p className="text-lg font-semibold text-gray-700">{data.categoria}</p>
+                {/* Header Sticky Fuxion Branding */}
+                <div className="p-6 bg-gradient-to-r from-[#94c120] to-[#006D44] text-white rounded-t-2xl flex justify-between items-start sticky top-0 z-20 shadow-md">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">
+                            Plan Wellness FUXION
+                        </h2>
+                        <p className="text-green-100 text-sm mt-1 font-medium">Análisis y Recomendación Personalizada</p>
+                    </div>
+                    <button 
+                        onClick={onClose} 
+                        className="text-white/80 hover:text-white transition-colors bg-white/10 hover:bg-white/20 p-2 rounded-full"
+                        aria-label="Cerrar"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
 
-                <div className="mt-8 flex flex-col gap-3">
-                    <button
-                        onClick={handleWhatsAppClick}
-                        className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-4 px-8 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 text-lg"
-                    >
-                        ¡Quiero mi cambio AHORA!
-                    </button>
-                    <button
-                        onClick={handleProfileLinkClick}
-                        className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300 text-base"
-                    >
-                        <ClipboardPlusIcon />
-                        Adelanta tu Proceso: Llena tu Perfil
-                    </button>
+                {/* Content */}
+                <div className="p-6 overflow-y-auto bg-gray-50">
+                    {loadingAI ? (
+                        <div className="flex flex-col items-center justify-center py-12 space-y-6">
+                            <div className="relative">
+                                <div className="w-20 h-20 border-4 border-gray-200 border-t-[#94c120] rounded-full animate-spin"></div>
+                                <div className="absolute inset-0 flex items-center justify-center font-bold text-[#006D44]">
+                                    X
+                                </div>
+                            </div>
+                            <div className="text-center animate-pulse">
+                                <p className="text-[#006D44] font-bold text-lg">Generando Plan Fuxion...</p>
+                                <p className="text-gray-500 text-sm mt-1">Analizando IMC y consultando catálogo de bebidas funcionales</p>
+                            </div>
+                        </div>
+                    ) : error ? (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500 mb-4">{error}</p>
+                            <p className="text-sm text-gray-400">Intenta recargar o contacta a tu coach.</p>
+                        </div>
+                    ) : recommendation ? (
+                        <div className="space-y-6 animate-fade-in-up">
+                            
+                            {/* 1. Status Card */}
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-500">IMC Actual</p>
+                                    <p className="text-3xl font-bold text-gray-800">{data.imc}</p>
+                                </div>
+                                <div className={`px-4 py-2 rounded-full text-sm font-bold ${
+                                    data.imc >= 25 ? 'bg-red-100 text-red-700' : 
+                                    data.imc < 18.5 ? 'bg-yellow-100 text-yellow-700' : 
+                                    'bg-green-100 text-green-700'
+                                }`}>
+                                    {data.categoria}
+                                </div>
+                            </div>
+
+                            {/* 2. Diagnosis Section */}
+                            <div className="bg-white p-5 rounded-xl border-l-4 border-[#006D44] shadow-sm">
+                                <h3 className="text-[#006D44] font-bold text-lg mb-3 flex items-center">
+                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    Análisis OMS
+                                </h3>
+                                <p className="text-gray-700 text-sm leading-relaxed text-justify">
+                                    {recommendation.analysis}
+                                </p>
+                            </div>
+
+                            {/* 3. Nutrition Tips */}
+                            <div className="bg-white p-5 rounded-xl border-l-4 border-blue-500 shadow-sm">
+                                <h3 className="text-blue-600 font-bold text-lg mb-3 flex items-center">
+                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                    Nutrición (Qué comer)
+                                </h3>
+                                <ul className="space-y-2">
+                                    {recommendation.nutritionTips.map((tip, idx) => (
+                                        <li key={idx} className="flex items-start text-sm text-gray-700">
+                                            <span className="text-blue-500 mr-2">•</span> {tip}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {/* 4. Fuxion Products Recommendation */}
+                            <div className="bg-gradient-to-br from-[#f0fdf4] to-[#dcfce7] p-5 rounded-xl border border-[#94c120] shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 right-0 -mt-4 -mr-4 bg-[#94c120] w-20 h-20 rounded-full opacity-20 blur-xl"></div>
+                                <h3 className="text-[#006D44] font-bold text-lg mb-4 flex items-center relative z-10">
+                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                                    Bebidas Fuxion Recomendadas
+                                </h3>
+                                <div className="space-y-3 relative z-10">
+                                    {recommendation.fuxionProducts.map((prod, idx) => (
+                                        <div key={idx} className="bg-white/80 p-3 rounded-lg border border-[#94c120]/30">
+                                            <div className="flex justify-between items-start">
+                                                <h4 className="font-bold text-[#006D44] text-sm">{prod.name}</h4>
+                                            </div>
+                                            <p className="text-xs text-gray-600 mt-1">{prod.benefit}</p>
+                                            <p className="text-xs text-[#94c120] font-semibold mt-1">Uso: {prod.usage}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={handleWhatsAppClick}
+                                className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center transition-transform transform hover:scale-[1.02]"
+                            >
+                                <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.31 20.62C8.75 21.41 10.36 21.82 12.04 21.82C17.5 21.82 21.95 17.37 21.95 11.91C21.95 6.45 17.5 2 12.04 2M12.04 3.67C16.56 3.67 20.28 7.38 20.28 11.91C20.28 16.44 16.56 20.15 12.04 20.15C10.49 20.15 8.99 19.74 7.7 19L7.22 18.72L4.35 19.65L5.3 16.83L5 16.35C4.22 15 3.8 13.47 3.8 11.91C3.8 7.38 7.52 3.67 12.04 3.67M9.13 7.82C8.91 7.82 8.7 7.82 8.5 7.82C8.28 7.82 8.04 7.84 7.82 8.18C7.6 8.5 7.02 9.12 7.02 10.23C7.02 11.33 7.84 12.38 7.97 12.55C8.12 12.72 9.27 14.54 11.12 15.31C12.59 15.93 13.04 15.76 13.43 15.7C13.82 15.64 14.78 15.06 15 14.48C15.22 13.9 15.22 13.43 15.15 13.32C15.08 13.21 14.92 13.15 14.65 13C14.38 12.85 13.43 12.38 13.18 12.27C12.94 12.16 12.78 12.1 12.63 12.38C12.48 12.66 12.03 13.21 11.89 13.38C11.74 13.54 11.6 13.56 11.33 13.46C11.06 13.34 10.24 13.08 9.27 12.2C8.5 11.53 7.97 10.7 7.84 10.43C7.7 10.16 7.84 10 7.97 9.87C8.1 9.76 8.24 9.57 8.37 9.44C8.5 9.3 8.56 9.19 8.63 9.02C8.7 8.85 8.67 8.7 8.63 8.63C8.58 8.56 8.37 8.04 8.16 7.84" /></svg>
+                                ¡Quiero este Plan Fuxion!
+                            </button>
+                        </div>
+                    ) : null}
                 </div>
             </div>
-             <style>{`
-                @keyframes fade-in-up {
-                    0% {
-                        opacity: 0;
-                        transform: translateY(20px) scale(0.95);
-                    }
-                    100% {
-                        opacity: 1;
-                        transform: translateY(0) scale(1);
-                    }
-                }
-                .animate-fade-in-up {
-                    animation: fade-in-up 0.4s ease-out forwards;
-                }
-            `}</style>
         </div>
     );
 };

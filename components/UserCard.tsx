@@ -59,8 +59,8 @@ const UserCard: React.FC<UserCardProps> = ({ data, onDelete, onUpdateStatus, onU
         if (!data.id) return;
         try {
             const [profileRes, questionnaireRes] = await Promise.all([
-                supabase.from('wellness_profiles').select('*').eq('user_id', data.id).single(),
-                supabase.from('wellness_consultations').select('*').eq('user_id', data.id).single()
+                supabase.from('fuxion_profiles').select('*').eq('user_id', data.id).single(),
+                supabase.from('fuxion_consultations').select('*').eq('user_id', data.id).single()
             ]);
 
             if (profileRes.error && profileRes.error.code !== 'PGRST116') throw profileRes.error;
@@ -143,8 +143,8 @@ const UserCard: React.FC<UserCardProps> = ({ data, onDelete, onUpdateStatus, onU
         const dataToSave = { ...formData, user_id: data.id };
 
         const { error } = await (profileData
-            ? supabase.from('wellness_profiles').update(dataToSave).eq('user_id', data.id)
-            : supabase.from('wellness_profiles').insert(dataToSave));
+            ? supabase.from('fuxion_profiles').update(dataToSave).eq('user_id', data.id)
+            : supabase.from('fuxion_profiles').insert(dataToSave));
 
         if (error) {
             console.error('Error saving profile:', error);
@@ -164,8 +164,8 @@ const UserCard: React.FC<UserCardProps> = ({ data, onDelete, onUpdateStatus, onU
         const dataToSave = { ...formData, user_id: data.id };
 
         const { error } = await (questionnaireData
-            ? supabase.from('wellness_consultations').update(dataToSave).eq('user_id', data.id)
-            : supabase.from('wellness_consultations').insert(dataToSave));
+            ? supabase.from('fuxion_consultations').update(dataToSave).eq('user_id', data.id)
+            : supabase.from('fuxion_consultations').insert(dataToSave));
 
         if (error) {
             console.error('Error saving questionnaire:', error);
